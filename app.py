@@ -6,6 +6,9 @@ app.py
 
 يدعم لغتين للواجهة والمخرجات: العربية (ar) والإنجليزية (en).
 يحتفظ بسجل الملخصات خلال الجلسة الواحدة (st.session_state).
+
+يحتوي أيضاً على حقن كود Google Analytics (GA4) عبر analytics.py
+(بلا استخدام BeautifulSoup - راجع analytics.py للتفاصيل).
 """
 
 import streamlit as st
@@ -14,12 +17,17 @@ import os
 
 from extract import extract_paper
 from summarize import summarize_paper, PaperSummary
+from ga_tracking import inject_ga
 
 st.set_page_config(
     page_title="Paper Summarizer",
     page_icon="🔬",
     layout="centered",
 )
+
+# ---------- حقن Google Analytics ----------
+# لازم تكون بعد set_page_config مباشرة وقبل أي عرض آخر بالصفحة
+inject_ga()
 
 # ---------- نصوص الواجهة بكل لغة ----------
 # كل نص بالتطبيق موجود هنا مرتين (ar/en) - نستدعيه عبر دالة T() بالأسفل
