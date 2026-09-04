@@ -17,7 +17,7 @@ import os
 
 from extract import extract_paper
 from summarize import summarize_paper, PaperSummary
-from ga_tracking import inject_ga
+from Ga_tracking import inject_ga
 
 st.set_page_config(
     page_title="Paper Summarizer",
