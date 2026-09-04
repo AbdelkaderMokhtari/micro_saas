@@ -11,9 +11,6 @@ app.py
 import streamlit as st
 import tempfile
 import os
-import pathlib
-import shutil
-from bs4 import BeautifulSoup
 
 from extract import extract_paper
 from summarize import summarize_paper, PaperSummary
@@ -23,43 +20,6 @@ st.set_page_config(
     page_icon="🔬",
     layout="centered",
 )
-
-# ---------- Google Analytics ----------
-# يحقن كود GA4 داخل <head> تاع ملف index.html تاع Streamlit نفسه.
-# يخدم محلياً وعلى Streamlit Cloud لأن التعديل يصير عند كل تشغيل للتطبيق.
-def inject_ga():
-    GA_ID = "google_analytics"
-    GA_MEASUREMENT_ID = "G-HV8L9G0D43"
-
-    GA_JS = f"""
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id={GA_MEASUREMENT_ID}"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){{dataLayer.push(arguments);}}
-        gtag('js', new Date());
-        gtag('config', '{GA_MEASUREMENT_ID}');
-    </script>
-    """
-
-    index_path = pathlib.Path(st.__file__).parent / "static" / "index.html"
-    soup = BeautifulSoup(index_path.read_text(), features="html.parser")
-
-    if not soup.find(id=GA_ID):
-        bck_index = index_path.with_suffix(".bck")
-        if bck_index.exists():
-            shutil.copy(bck_index, index_path)  # رجّع نسخة أصلية قبل التعديل
-        else:
-            shutil.copy(index_path, bck_index)  # خزّن نسخة احتياطية أول مرة
-
-        html = str(soup)
-        new_html = html.replace(
-            "<head>", f'<head>\n<div id="{GA_ID}"></div>\n{GA_JS}'
-        )
-        index_path.write_text(new_html)
-
-
-inject_ga()
 
 # ---------- نصوص الواجهة بكل لغة ----------
 # كل نص بالتطبيق موجود هنا مرتين (ar/en) - نستدعيه عبر دالة T() بالأسفل
