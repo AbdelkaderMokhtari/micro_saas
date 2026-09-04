@@ -42,7 +42,52 @@ class PaperSummary:
     limitations: str
 
 
-SUMMARY_PROMPT_TEMPLATE = """أنت مساعد أكاديمي متخصص بتحليل الأوراق البحثية في مجال
+def _build_prompt(paper_text: str, language: str) -> str:
+    """
+    يبني الـ prompt حسب لغة الإخراج المطلوبة (ar أو en).
+    بنية JSON نفسها بالحالتين - يتغيّر بس لغة التعليمات ولغة المخرجات.
+    """
+    if language == "en":
+        return f"""You are an academic assistant specialized in analyzing research
+papers in computer science and AI. I will give you text extracted from a
+research paper (it may be a sample from different parts of the paper: the
+beginning, middle, and end).
+
+Your task: read the text and return a structured summary in JSON format
+ONLY, with no extra text before or after it, and no Markdown code fences.
+The exact required format:
+
+{{
+  "tldr": "3-4 sentences explaining the problem and the proposed solution in simple language",
+  "key_contributions": ["contribution 1", "contribution 2", "..."],
+  "methodology": "a short paragraph (3-5 sentences) explaining the methodology and experimental setup",
+  "key_results": ["key result 1", "key result 2", "..."],
+  "limitations": "a short paragraph about limitations mentioned in the paper (or 'No explicit limitations were mentioned in the available text' if none found)"
+}}
+
+Important rules:
+- key_contributions and key_results must be lists of 4 to 6 points maximum
+- each point should be one clear, specific sentence, not generic
+- IMPORTANT: the text sent to you is divided into several parts marked with
+  "===" (e.g. beginning of paper, samples from the middle, end of paper).
+  Each part usually contains a different idea or concept. Do not just
+  summarize one part or repeat the same idea in different phrasing - make
+  sure you cover at least one independent point from each major part
+  mentioned in the text, even if they are scattered concepts (such as
+  evaluation criteria, procedural steps, additional definitions)
+- do not invent information that isn't in the text - if information is
+  missing, state that explicitly
+- write the summary in clear academic English, even if the original text is
+  in another language
+
+--- paper text ---
+{paper_text}
+--- end of paper text ---
+
+Now return the JSON only:"""
+
+    # الافتراضي: عربي
+    return f"""أنت مساعد أكاديمي متخصص بتحليل الأوراق البحثية في مجال
 الحوسبة والذكاء الاصطناعي. سأعطيك نص مستخرج من ورقة بحثية (قد يكون مقتطعاً من
 أجزاء مختلفة من الورقة: البداية والمنتصف والنهاية).
 
@@ -58,8 +103,13 @@ SUMMARY_PROMPT_TEMPLATE = """أنت مساعد أكاديمي متخصص بتح�
 }}
 
 قواعد مهمة:
-- key_contributions و key_results لازم تكون قوائم من 3 إلى 5 نقاط كحد أقصى
+- key_contributions و key_results لازم تكون قوائم من 4 إلى 6 نقاط كحد أقصى
 - كل نقطة تكون جملة واحدة واضحة ومحددة، مو عامة
+- ⚠️ مهم جداً: النص المرسل لك مقسّم لعدة أجزاء بعلامات "===" (مثل بداية الورقة،
+  عيّنات من المنتصف، نهاية الورقة). كل جزء غالباً يحتوي معلومة أو مفهوم مختلف
+  عن باقي الأجزاء. لا تكتفِ بتلخيص جزء واحد أو تكرار نفس الفكرة بصيغ مختلفة -
+  تأكد إنك غطّيت على الأقل نقطة واحدة مستقلة من كل جزء رئيسي مذكور بالنص،
+  حتى لو كانت مفاهيم متفرقة (مثل: معايير تقييم، خطوات عملية، تعريفات إضافية)
 - لا تخترع معلومات غير موجودة بالنص - لو معلومة ناقصة، اذكر ذلك صراحة
 - اكتب الملخص باللغة العربية بأسلوب أكاديمي واضح، حتى لو النص الأصلي بالإنجليزية
 
@@ -79,14 +129,18 @@ def _parse_model_response(raw_text: str) -> dict:
     return json.loads(cleaned)
 
 
-def summarize_paper(paper_text: str) -> PaperSummary:
+def summarize_paper(paper_text: str, language: str = "ar") -> PaperSummary:
     """
     يرسل نص الورقة لـ Gemini ويرجع PaperSummary منظم.
+
+    Args:
+        paper_text: النص المستخرج من الورقة
+        language: لغة الملخص المطلوب - "ar" (عربي، الافتراضي) أو "en" (إنجليزي)
 
     Raises:
         ValueError: لو الموديل رجع رد ما نقدر نحوله لـ JSON صالح
     """
-    prompt = SUMMARY_PROMPT_TEMPLATE.format(paper_text=paper_text)
+    prompt = _build_prompt(paper_text, language)
 
     response = client.models.generate_content(
         model=MODEL_NAME,
