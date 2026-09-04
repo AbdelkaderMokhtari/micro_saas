@@ -61,7 +61,7 @@ TEXTS = {
         "success_msg": "تم التلخيص بنجاح ✅",
         "error_prefix": "صار خطأ أثناء المعالجة:",
         "sidebar_history_title": "📚 سجل هذه الجلسة",
-        "sidebar_empty": "لسا ما لخصت أي ورقة بهذي الجلسة.",
+        "sidebar_empty": "لازلت لم تلخص أي ورقة بهذه الجلسة.",
         "clear_history": "🗑️ مسح السجل",
         "pages_label": "عدد الصفحات",
         "tldr_title": "🔑 الخلاصة السريعة (TL;DR)",
